@@ -23,7 +23,7 @@
   },
   "homepage": "https://github.com/unfoldingWord-box3/uw-proskomma-rcl#readme",
   "dependencies": {
-    "proskomma": "^0.1.11",
+    "proskomma": "^0.1.13",
     "xregexp": "^4.3.0"
   },
   "devDependencies": {
