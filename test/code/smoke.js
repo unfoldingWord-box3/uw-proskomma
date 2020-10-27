@@ -39,7 +39,7 @@ test(
         try {
             t.plan(3);
             const pk = new UWProsKomma();
-            const content = fse.readFileSync(path.resolve(__dirname, "../test_data/usfm/ust_psa_1.usfm"));
+            const content = fse.readFileSync(path.resolve(__dirname, "../test_data/usfm/ust_psa_1.usfm")).toString();
             pk.importDocument(
                 {"org": "unfoldingWord", "lang": "eng", "abbr": "ust"},
                 "usfm",
@@ -56,4 +56,3 @@ test(
         }
     }
 );
-

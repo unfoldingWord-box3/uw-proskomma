@@ -37,6 +37,12 @@ class UWProsKomma extends ProsKomma {
     selectorString(docSetSelectors) {
         return `${docSetSelectors.org}/${docSetSelectors.lang}_${docSetSelectors.abbr}`;
     }
+
+    importDocuments(selectors, contentType, contentStrings, filterOptions, customTags, emptyBlocks, tags) {
+        contentStrings = contentStrings.map(cs => cs.replace(/\\s5/g, "\\ts\\*"));
+        return super.importDocuments(selectors, contentType, contentStrings, filterOptions, customTags, emptyBlocks, tags);
+    }
+
 }
 
 module.exports = {UWProsKomma}
