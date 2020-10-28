@@ -10,7 +10,7 @@ const pkWithDoc = () => {
     const pk = new UWProsKomma();
     const content = fse.readFileSync(path.resolve(__dirname, "../test_data/usfm/ust_psa_1.usfm")).toString();
     pk.importDocument(
-        {"org": "unfoldingWord", "lang": "eng", "abbr": "ust"},
+        {"org": "unfoldingWord", "lang": "en", "abbr": "ust"},
         "usfm",
         content
     );
@@ -57,7 +57,7 @@ test(
             t.equal(result.errors, undefined);
             const docSet = result.data.docSets[0];
             t.equal(docSet.selectors.length, 3);
-            t.equal(docSet.selectorString, "unfoldingWord/eng_ust");
+            t.equal(docSet.selectorString, "unfoldingWord/en_ust");
         } catch (err) {
             console.log(err)
         }
