@@ -1,6 +1,6 @@
 {
   "name": "uw-proskomma",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "A Subclass of Proskomma for Unfolding Word",
   "main": "index.js",
   "scripts": {
@@ -23,7 +23,7 @@
   },
   "homepage": "https://github.com/unfoldingWord-box3/uw-proskomma-rcl#readme",
   "dependencies": {
-    "proskomma": "^0.1.15",
+    "proskomma": "^0.1.16",
     "xregexp": "^4.3.0"
   },
   "devDependencies": {
