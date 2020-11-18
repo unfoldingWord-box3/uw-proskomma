@@ -47,6 +47,22 @@ test(
 );
 
 test(
+    `Version info (${testGroup})`,
+    async function (t) {
+        try {
+            t.plan(2);
+            const pk = new UWProsKomma();
+            const query = '{ processor packageVersion }';
+            const result = await pk.gqlQuery(query);
+            t.equal(result.errors, undefined);
+            t.equal(result.data.processor, "ProsKomma JS for Unfolding Word");
+        } catch (err) {
+            console.log(err)
+        }
+    }
+);
+
+test(
     `DocSet Selector Query (${testGroup})`,
     async function (t) {
         try {

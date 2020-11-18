@@ -1,4 +1,5 @@
 const { ProsKomma } = require('proskomma');
+const packageJson = require('./package.json');
 
 class UWProsKomma extends ProsKomma {
 
@@ -33,6 +34,14 @@ class UWProsKomma extends ProsKomma {
         }
         this.emptyBlocks = [];
     }
+
+    processor() {
+        return "ProsKomma JS for Unfolding Word";
+    }
+
+    packageVersion() {
+        return packageJson.version;
+    };
 
     selectorString(docSetSelectors) {
         return `${docSetSelectors.org}/${docSetSelectors.lang}_${docSetSelectors.abbr}`;
