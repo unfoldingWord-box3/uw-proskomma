@@ -23,11 +23,14 @@
   },
   "homepage": "https://github.com/unfoldingWord-box3/uw-proskomma-rcl#readme",
   "dependencies": {
+    "d3-dsv": "^2.0.0",
     "proskomma": "^0.1.21",
     "xregexp": "^4.3.0"
   },
   "devDependencies": {
+    "axios": "^0.21.0",
     "fs-extra": "^9.0.1",
+    "js-yaml-parser": "^1.0.0",
     "nyc": "^15.1.0",
     "tap-nyc": "^1.0.3",
     "tap-summary": "^4.0.0",
