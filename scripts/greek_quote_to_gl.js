@@ -91,7 +91,8 @@ const readTsv = path => {
 
 const searchWordRecords = origString => {
     const ret = [];
-    for (const searchExpr of origString.split(" ")) {
+    for (let searchExpr of origString.split(" ")) {
+        searchExpr = searchExpr.replace(/[,’?;]/g, "");
         if (searchExpr.includes("…")) {
             const textBefore = searchExpr.split("…")[0];
             const textAfter = searchExpr.split("…").reverse()[0];
@@ -104,16 +105,17 @@ const searchWordRecords = origString => {
     return ret;
 }
 
-const doQuery = async (book, cv) => {
+const doQuery = async (book, chapter, verse) => {
+    const cv = `${chapter}:${verse}`;
     const query = ('{' +
         'docSets {' +
         '  abbr: selector(id:"abbr")' +
         '  documents {' +
         '    mainSequence {' +
-        '      blocks (withScriptureCV: "%cv%") {' +
+        '      blocks (withScopes:["chapter/%chapter%", "verse/%verse%"]) {' +
         '        tokens(' +
         '          includeContext:true' +
-        '          withScriptureCV: "%cv%"' +
+        '          withScopes:["chapter/%chapter%", "verse/%verse%"]' +
         '        ) {' +
         '          subType' +
         '          chars' +
@@ -125,7 +127,7 @@ const doQuery = async (book, cv) => {
         '  }' +
         '}' +
         '}').replace(/%book%/g, book)
-        .replace(/%cv%/g, cv);
+        .replace(/%cv%/g, cv).replace(/%chapter%/g, chapter).replace(/%verse%/g, verse);
     return await pk.gqlQuery(query);
 }
 
@@ -156,6 +158,8 @@ const lemmaForSearchWords = (searchTuples, tokens) => {
         }
         if (searchTuples.length === 0) { // Everything matched
             return lemma;
+        } else if (tokens.length === 0) { // No more tokens - fail
+            return null;
         } else if (tokens[0].chars === searchTuples[0][0]) { // First word matched, try next one
             return lfsw1(searchTuples.slice(1), tokens.slice(1), lemma.concat(tokens[0].lemma));
         } else if (searchTuples[0][1]) { // non-greedy wildcard, try again on next token
@@ -177,10 +181,12 @@ const glTextForLemma = (tokens, lemmaTuples) => {
         if (!glWords) {
             glWords = [];
         }
-        if (lemmaTuples.filter(lt => !lt[1]).length === 0) { // Every lemma matched once - success!
-            return glWords;
-        } else if (tokens.length === 0) { // End of tokens and unmatched lemma - fail!
-            return null;
+        if (tokens.length === 0) { // End of tokens
+            if (lemmaTuples.filter(lt => !lt[1]).length === 0) { // Every lemma matched once - success!
+                return glWords;
+            } else {
+                return null;
+            }
         } else if (!tokens[0].lemma) { // No lemmas for first token - try next token
             return gltfl1(tokens.slice(1), lemmaTuples, glWords.concat([tokens[0].chars]));
         } else { // Try to match lemmaTuples to lemma for first Token
@@ -195,11 +201,14 @@ const glTextForLemma = (tokens, lemmaTuples) => {
             }
             if (matched) { // Matched token and updated at least one lemma flag - next token please!
                 return gltfl1(tokens.slice(1), lemmaTuples, glWords.concat([tokens[0].chars]));
-            } else { // No match - fail
-                return null;
+            } else { // No match - success or fail
+                if (lemmaTuples.filter(lt => !lt[1]).length === 0) { // Every lemma matched once - success!
+                    return glWords;
+                } else {
+                    return null;
+                }
             }
         }
-
     }
 
     if (tokens.length === 0) {
@@ -219,7 +228,10 @@ getDocuments(pk)
                 console.log(`  ${tsvRecord.book} ${cv}`);
                 const searchTuples = searchWordRecords(tsvRecord.origQuote);
                 // console.log("    Do Query");
-                const result = await doQuery(tsvRecord.book, cv);
+                const startQueryTime = Date.now();
+                const result = await doQuery(tsvRecord.book, tsvRecord.chapter, tsvRecord.verse);
+                console.log(`    Quote to match: "${tsvRecord.origQuote}"`);
+                console.log(`    Query in ${Date.now() - startQueryTime} msec`);
                 if (result.errors) {
                     throw new Error(result.errors);
                 }
@@ -227,7 +239,6 @@ getDocuments(pk)
                 const tokens = translationTokens(result.data.docSets);
                 // console.log("    Lemma from search words")
                 const lemma = lemmaForSearchWords(searchTuples, tokens.ugnt);
-                console.log(`    Quote to match: "${tsvRecord.origQuote}"`);
                 if (!lemma) {
                     console.log(`    NO LEMMA MATCHED`);
                     continue;
@@ -235,6 +246,10 @@ getDocuments(pk)
                 console.log(`    Lemma for match: ${lemma.join(" ")}`);
                 for (const gl of ["ult", "ust"]) {
                     const glText = glTextForLemma(tokens[gl], lemma.map(l => [l, false]));
+                    if (!glText) {
+                        console.log(`    NO GL TEXT MATCHED`);
+                        continue;
+                    }
                     console.log(`    ${gl}: "${glText.join(" ")}"`);
                 }
                 console.log();
