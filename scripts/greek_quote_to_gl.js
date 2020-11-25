@@ -107,7 +107,7 @@ const doQuery = async () => {
         '    book: header(id:"bookCode")' +
         '    mainSequence {' +
         '      itemGroups (' +
-        '        byScopes:["chapter/", "verse/"]' +
+        '        byScopes:["chapter/", "verses/"]' +
         '        includeContext:true' +
         '      ) {' +
         '        scopeLabels' +
@@ -136,9 +136,10 @@ const doQuery = async () => {
             ret[docSet.abbr][document.book] = {};
             for (const itemGroup of document.mainSequence.itemGroups) {
                 const chapter = itemGroup.scopeLabels.filter(s => s.startsWith("chapter/"))[0].split("/")[1];
-                const verse = itemGroup.scopeLabels.filter(s => s.startsWith("verse/"))[0].split("/")[1];
-                const cv = `${chapter}:${verse}`;
-                ret[docSet.abbr][document.book][cv] = itemGroup.tokens;
+                for (const verse of itemGroup.scopeLabels.filter(s => s.startsWith("verses/"))[0].split("/")[1].split("-")) {
+                    const cv = `${chapter}:${verse}`;
+                    ret[docSet.abbr][document.book][cv] = itemGroup.tokens;
+                }
             }
         }
     }
@@ -189,6 +190,7 @@ const lemmaForSearchWords = (searchTuples, tokens) => {
 const glTextForLemma = (tokens, lemmaTuples) => {
 
     const gltfl1 = (tokens, lemmaTuples, glWords) => {
+
         if (!glWords) {
             glWords = [];
         }
@@ -212,22 +214,22 @@ const glTextForLemma = (tokens, lemmaTuples) => {
             }
             if (matched) { // Matched token and updated at least one lemma flag - next token please!
                 return gltfl1(tokens.slice(1), lemmaTuples, glWords.concat([tokens[0].chars]));
-            } else { // No match - success or fail
+            } else { // No match - success, continue or fail
                 if (lemmaTuples.filter(lt => !lt[1]).length === 0) { // Every lemma matched once - success!
                     return glWords;
+                } else if (lemmaTuples.filter(lt => lt[1]).length > 0) {
+                    return null;
                 } else {
                     return null;
                 }
             }
         }
     }
-
     if (tokens.length === 0) {
         return null;
     }
-    return gltfl1(tokens, lemmaTuples) || glTextForLemma(tokens.slice(1), lemmaTuples);
+    return gltfl1(tokens, deepcopy(lemmaTuples)) || glTextForLemma(tokens.slice(1), lemmaTuples);
 }
-
 
 // MAIN
 const pk = new UWProsKomma();
@@ -251,7 +253,8 @@ getDocuments(pk)
                 const lemma = lemmaForSearchWords(searchTuples, ugntTokens);
                 if (!lemma) {
                     console.log(`    NO LEMMA MATCHED`);
-                    console.log(`    SEARCH TUPLES: ${JSON.stringify(searchTuples)}`)
+                    console.log(`      Search Tuples: ${JSON.stringify(searchTuples)}`)
+                    console.log(`      Verse content: ${ugntTokens.map(t => `<${t.chars} ${t.lemma.join("|")}>`).join(", ")}`)
                     continue;
                 }
                 console.log(`    Lemma for match: ${lemma.join(" ")}`);
@@ -263,7 +266,8 @@ getDocuments(pk)
                     }
                     const glText = glTextForLemma(glTokens, lemma.map(l => [l, false]));
                     if (!glText) {
-                        console.log(`    NO GL TEXT MATCHED`);
+                        console.log(`    ${gl}: NO GL TEXT MATCHED`);
+                        console.log(`      Verse content: ${glTokens.map(t => `<${t.chars} ${t.lemma.join("|")}>`).join(", ")}`)
                         continue;
                     }
                     console.log(`    ${gl}: "${glText.join(" ")}"`);
