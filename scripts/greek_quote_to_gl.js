@@ -1,15 +1,9 @@
 const Axios = require("axios");
 const YAML = require('js-yaml-parser');
 const fse = require('fs-extra');
+const deepcopy = require('deepcopy');
 
 const {UWProsKomma} = require('../index');
-
-// ARGS: tsv,
-const pk = new UWProsKomma();
-
-const args = process.argv.slice(2);
-const tsvPath = args[0];
-const book = tsvPath.split(".")[0].split("-")[1];
 
 const getDocuments = async pk => {
     const baseURLs = [
@@ -54,8 +48,9 @@ const getDocuments = async pk => {
                 }
             );
         console.log(`      Downloaded`)
+        const startTime = Date.now();
         pk.importDocuments(selectors, "usfm", content, {});
-        console.log(`      Imported`);
+        console.log(`      Imported in ${Date.now() - startTime} msec`);
     }
     return pk;
 }
@@ -92,12 +87,11 @@ const readTsv = path => {
 const searchWordRecords = origString => {
     const ret = [];
     for (let searchExpr of origString.split(" ")) {
-        searchExpr = searchExpr.replace(/[,’?;]/g, "");
+        searchExpr = searchExpr.replace(/[,’?;.!]/g, "");
         if (searchExpr.includes("…")) {
-            const textBefore = searchExpr.split("…")[0];
-            const textAfter = searchExpr.split("…").reverse()[0];
-            ret.push([textBefore, false]);
-            ret.push([textAfter, true]);
+            const searchExprParts = searchExpr.split("…");
+            ret.push([searchExprParts[0], false]);
+            searchExprParts.slice(1).forEach(p => ret.push([p, true]));
         } else {
             ret.push([searchExpr, false]);
         }
@@ -105,18 +99,19 @@ const searchWordRecords = origString => {
     return ret;
 }
 
-const doQuery = async (book, chapter, verse) => {
-    const cv = `${chapter}:${verse}`;
+const doQuery = async () => {
     const query = ('{' +
         'docSets {' +
         '  abbr: selector(id:"abbr")' +
         '  documents {' +
+        '    book: header(id:"bookCode")' +
         '    mainSequence {' +
-        '      blocks (withScopes:["chapter/%chapter%", "verse/%verse%"]) {' +
-        '        tokens(' +
-        '          includeContext:true' +
-        '          withScopes:["chapter/%chapter%", "verse/%verse%"]' +
-        '        ) {' +
+        '      itemGroups (' +
+        '        byScopes:["chapter/", "verse/"]' +
+        '        includeContext:true' +
+        '      ) {' +
+        '        scopeLabels' +
+        '        tokens {' +
         '          subType' +
         '          chars' +
         '          position' +
@@ -126,28 +121,44 @@ const doQuery = async (book, chapter, verse) => {
         '    }' +
         '  }' +
         '}' +
-        '}').replace(/%book%/g, book)
-        .replace(/%cv%/g, cv).replace(/%chapter%/g, chapter).replace(/%verse%/g, verse);
-    return await pk.gqlQuery(query);
+        '}');
+    let startTime = Date.now();
+    const result = await pk.gqlQuery(query);
+    console.log(`GraphQL query in ${Date.now() - startTime} msec`);
+    if (result.errors) {
+        throw new Error(result.errors);
+    }
+    startTime = Date.now();
+    const ret = {};
+    for (const docSet of result.data.docSets) {
+        ret[docSet.abbr] = {};
+        for (const document of docSet.documents) {
+            ret[docSet.abbr][document.book] = {};
+            for (const itemGroup of document.mainSequence.itemGroups) {
+                const chapter = itemGroup.scopeLabels.filter(s => s.startsWith("chapter/"))[0].split("/")[1];
+                const verse = itemGroup.scopeLabels.filter(s => s.startsWith("verse/"))[0].split("/")[1];
+                const cv = `${chapter}:${verse}`;
+                ret[docSet.abbr][document.book][cv] = itemGroup.tokens;
+            }
+        }
+    }
+    console.log(`Postprocess Query Result in ${Date.now() - startTime} msec`);
+    return ret;
 }
 
-const translationTokens = docSets => {
-    const ret = {};
-    for (const docSet of docSets) {
-        const blockTokens = [];
-        for (const block of docSet.documents[0].mainSequence.blocks) {
-            block.tokens
-                .filter(t => t.subType === "wordLike")
-                .map(t => {
-                    t.lemma = t.scopes.map(s => s.split("/")[5]);
-                    delete t.scopes;
-                    delete t.subType;
-                    blockTokens.push(t);
-                })
-        }
-        ret[docSet.abbr] = blockTokens;
+const slimTokens = tokens => {
+    if (!tokens) {
+        return null;
     }
-    return ret;
+    return tokens
+        .filter(t => t.subType === "wordLike")
+        .map(t => {
+            const t2 = deepcopy(t);
+            t2.lemma = t2.scopes.map(s => s.split("/")[5]);
+            delete t2.scopes;
+            delete t2.subType;
+            return t2;
+        })
 }
 
 const lemmaForSearchWords = (searchTuples, tokens) => {
@@ -217,35 +228,40 @@ const glTextForLemma = (tokens, lemmaTuples) => {
     return gltfl1(tokens, lemmaTuples) || glTextForLemma(tokens.slice(1), lemmaTuples);
 }
 
+
+// MAIN
+const pk = new UWProsKomma();
+const args = process.argv.slice(2);
+const tsvPath = args[0];
+const book = tsvPath.split(".")[0].split("-")[1];
+
 getDocuments(pk)
     .then(async () => {
-            console.log("Process TSV");
             const startTime = Date.now();
+            const tokenLookup = await doQuery(book);
+            console.log("Iterate over TSV records");
             let nRecords = 0;
             for (const tsvRecord of readTsv(tsvPath)) {
                 nRecords++;
                 const cv = `${tsvRecord.chapter}:${tsvRecord.verse}`;
                 console.log(`  ${tsvRecord.book} ${cv}`);
+                console.log(`    Search string: ${tsvRecord.origQuote}`);
                 const searchTuples = searchWordRecords(tsvRecord.origQuote);
-                // console.log("    Do Query");
-                const startQueryTime = Date.now();
-                const result = await doQuery(tsvRecord.book, tsvRecord.chapter, tsvRecord.verse);
-                console.log(`    Quote to match: "${tsvRecord.origQuote}"`);
-                console.log(`    Query in ${Date.now() - startQueryTime} msec`);
-                if (result.errors) {
-                    throw new Error(result.errors);
-                }
-                // console.log("    Process Query Results")
-                const tokens = translationTokens(result.data.docSets);
-                // console.log("    Lemma from search words")
-                const lemma = lemmaForSearchWords(searchTuples, tokens.ugnt);
+                const ugntTokens = slimTokens(tokenLookup.ugnt[book][cv]);
+                const lemma = lemmaForSearchWords(searchTuples, ugntTokens);
                 if (!lemma) {
                     console.log(`    NO LEMMA MATCHED`);
+                    console.log(`    SEARCH TUPLES: ${JSON.stringify(searchTuples)}`)
                     continue;
                 }
                 console.log(`    Lemma for match: ${lemma.join(" ")}`);
                 for (const gl of ["ult", "ust"]) {
-                    const glText = glTextForLemma(tokens[gl], lemma.map(l => [l, false]));
+                    const glTokens = slimTokens(tokenLookup[gl][book][cv]);
+                    if (!glTokens) {
+                        console.log(`    NO TOKENS for ${gl}`);
+                        continue;
+                    }
+                    const glText = glTextForLemma(glTokens, lemma.map(l => [l, false]));
                     if (!glText) {
                         console.log(`    NO GL TEXT MATCHED`);
                         continue;
@@ -254,6 +270,6 @@ getDocuments(pk)
                 }
                 console.log();
             }
-            console.log(`${nRecords} queries in ${Date.now() - startTime} msec`);
+            console.log(`${nRecords} rows processed in ${Date.now() - startTime} msec`);
         }
     )
