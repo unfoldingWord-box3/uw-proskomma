@@ -243,6 +243,11 @@ getDocuments(pk)
             const tokenLookup = await doQuery(book);
             console.log("Iterate over TSV records");
             let nRecords = 0;
+            const issues = {
+                ugnt: 0,
+                ult: 0,
+                ust: 0
+            }
             for (const tsvRecord of readTsv(tsvPath)) {
                 nRecords++;
                 const cv = `${tsvRecord.chapter}:${tsvRecord.verse}`;
@@ -255,6 +260,7 @@ getDocuments(pk)
                     console.log(`    NO LEMMA MATCHED`);
                     console.log(`      Search Tuples: ${JSON.stringify(searchTuples)}`)
                     console.log(`      Verse content: ${ugntTokens.map(t => `<${t.chars} ${t.lemma.join("|")}>`).join(", ")}`)
+                    issues.ugnt++;
                     continue;
                 }
                 console.log(`    Lemma for match: ${lemma.join(" ")}`);
@@ -262,12 +268,14 @@ getDocuments(pk)
                     const glTokens = slimTokens(tokenLookup[gl][book][cv]);
                     if (!glTokens) {
                         console.log(`    NO TOKENS for ${gl}`);
+                        issues[gl]++;
                         continue;
                     }
                     const glText = glTextForLemma(glTokens, lemma.map(l => [l, false]));
                     if (!glText) {
                         console.log(`    ${gl}: NO GL TEXT MATCHED`);
                         console.log(`      Verse content: ${glTokens.map(t => `<${t.chars} ${t.lemma.join("|")}>`).join(", ")}`)
+                        issues[gl]++;
                         continue;
                     }
                     console.log(`    ${gl}: "${glText.join(" ")}"`);
@@ -275,5 +283,6 @@ getDocuments(pk)
                 console.log();
             }
             console.log(`${nRecords} rows processed in ${Date.now() - startTime} msec`);
+            console.log(`Issues: ${JSON.stringify(issues)}`);
         }
     )
