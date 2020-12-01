@@ -187,7 +187,11 @@ const lemmaForSearchWords = (searchTuples, tokens) => {
     return lfsw1(searchTuples, tokens) || lemmaForSearchWords(searchTuples, tokens.slice(1));
 }
 
-const glTextForLemma = (tokens, lemmaTuples) => {
+const glTextForLemma = (tokens, lemma) => {
+
+    const initialLemmaTuples = lemma.map(l => [l, false]);
+
+    const results = [];
 
     const gltfl1 = (tokens, lemmaTuples, glWords) => {
 
@@ -195,13 +199,9 @@ const glTextForLemma = (tokens, lemmaTuples) => {
             glWords = [];
         }
         if (tokens.length === 0) { // End of tokens
-            if (lemmaTuples.filter(lt => !lt[1]).length === 0) { // Every lemma matched once - success!
-                return glWords;
-            } else {
-                return null;
-            }
+            return [glWords, lemmaTuples.filter(l => !l[1]).length];
         } else if (!tokens[0].lemma) { // No lemmas for first token - try next token
-            return gltfl1(tokens.slice(1), lemmaTuples, glWords.concat([tokens[0].chars]));
+            return gltfl1(tokens.slice(1), lemmaTuples, glWords.concat([[tokens[0].chars, false]]));
         } else { // Try to match lemmaTuples to lemma for first Token
             let matched = false;
             for (const tokenLemma of tokens[0].lemma) {
@@ -213,22 +213,45 @@ const glTextForLemma = (tokens, lemmaTuples) => {
                 }
             }
             if (matched) { // Matched token and updated at least one lemma flag - next token please!
-                return gltfl1(tokens.slice(1), lemmaTuples, glWords.concat([tokens[0].chars]));
-            } else { // No match - success, continue or fail
-                if (lemmaTuples.filter(lt => !lt[1]).length === 0) { // Every lemma matched once - success!
-                    return glWords;
-                } else if (lemmaTuples.filter(lt => lt[1]).length > 0) {
-                    return null;
+                return gltfl1(tokens.slice(1), lemmaTuples, glWords.concat([[tokens[0].chars, true]]));
+            } else { // No match - continue if unmatched lemma
+                if (lemmaTuples.filter(l => !l[1]).length === 0) {
+                    return [glWords.concat(tokens.map(t => [t.chars, false])), lemmaTuples.filter(l => !l[1]).length];
                 } else {
-                    return null;
+                    return gltfl1(tokens.slice(1), lemmaTuples, glWords.concat([[tokens[0].chars, false]]));
                 }
             }
         }
     }
-    if (tokens.length === 0) {
-        return null;
+    for (let n = 0; n < tokens.length; n++) {
+        const result = gltfl1(tokens.slice(n), deepcopy(initialLemmaTuples));
+        const fullResult = [tokens.slice(0, n).map(t => [t.chars, false]).concat(result[0]), result[1]];
+        results.push(fullResult);
     }
-    return gltfl1(tokens, deepcopy(lemmaTuples)) || glTextForLemma(tokens.slice(1), lemmaTuples);
+    const matchScore = r => {
+        if (r[1] === 0) {
+            let firstMatch;
+            let lastMatch;
+            let matchCount = 0;
+            for (const [n, t] of r[0].entries()) {
+                if (t[1]) {
+                    if (matchCount === 0) {
+                        firstMatch = n;
+                    }
+                    lastMatch = n;
+                    matchCount++;
+                }
+            }
+            return 0 - (matchCount - (2 * ((lastMatch - firstMatch) - matchCount)));
+        } else {
+            return r[1];
+        }
+    }
+    const betterMatch = (a, b) => {
+        return matchScore(a) - matchScore(b);
+    }
+    results.sort(betterMatch);
+    return results[0][0];
 }
 
 // MAIN
@@ -271,14 +294,14 @@ getDocuments(pk)
                         issues[gl]++;
                         continue;
                     }
-                    const glText = glTextForLemma(glTokens, lemma.map(l => [l, false]));
+                    const glText = glTextForLemma(glTokens, lemma);
                     if (!glText) {
                         console.log(`    ${gl}: NO GL TEXT MATCHED`);
                         console.log(`      Verse content: ${glTokens.map(t => `<${t.chars} ${t.lemma.join("|")}>`).join(", ")}`)
                         issues[gl]++;
                         continue;
                     }
-                    console.log(`    ${gl}: "${glText.join(" ")}"`);
+                    console.log(`    ${gl}: "${glText.map(tp => tp[1] ? tp[0].toUpperCase() : tp[0]).join(" ").trim()}"`);
                 }
                 console.log();
             }
