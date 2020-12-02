@@ -152,12 +152,11 @@ const slimTokens = tokens => {
         return null;
     }
     return tokens
-        .filter(t => t.subType === "wordLike")
         .map(t => {
             const t2 = deepcopy(t);
             t2.lemma = t2.scopes.map(s => s.split("/")[5]);
             delete t2.scopes;
-            delete t2.subType;
+            t2.chars = t2.chars.replace(/[ \t\r\n]+/g, " ");
             return t2;
         })
 }
@@ -277,7 +276,7 @@ getDocuments(pk)
                 console.log(`  ${tsvRecord.book} ${cv}`);
                 console.log(`    Search string: ${tsvRecord.origQuote}`);
                 const searchTuples = searchWordRecords(tsvRecord.origQuote);
-                const ugntTokens = slimTokens(tokenLookup.ugnt[book][cv]);
+                const ugntTokens = slimTokens(tokenLookup.ugnt[book][cv].filter(t => t.subType === "wordLike"));
                 const lemma = lemmaForSearchWords(searchTuples, ugntTokens);
                 if (!lemma) {
                     console.log(`    NO LEMMA MATCHED`);
@@ -301,7 +300,7 @@ getDocuments(pk)
                         issues[gl]++;
                         continue;
                     }
-                    console.log(`    ${gl}: "${glText.map(tp => tp[1] ? tp[0].toUpperCase() : tp[0]).join(" ").trim()}"`);
+                    console.log(`    ${gl}: "${glText.map(tp => tp[1] ? tp[0].toUpperCase() : tp[0]).join("").trim()}"`);
                 }
                 console.log();
             }
