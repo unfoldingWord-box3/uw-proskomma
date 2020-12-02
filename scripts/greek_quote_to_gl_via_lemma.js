@@ -241,7 +241,7 @@ const glTextForLemma = (tokens, lemma) => {
                     matchCount++;
                 }
             }
-            return 0 - (matchCount - (2 * ((lastMatch - firstMatch) - matchCount)));
+            return 0 - (matchCount - (0.5 * ((lastMatch - firstMatch) - matchCount)));
         } else {
             return r[1];
         }
