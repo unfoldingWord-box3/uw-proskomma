@@ -115,7 +115,7 @@ const doQuery = async () => {
         '          subType' +
         '          chars' +
         '          position' +
-        '          scopes(startsWith:["attribute/milestone/zaln/x-content"])' +
+        '          scopes(startsWith:["attribute/milestone/zaln/x-content", "attribute/milestone/zaln/x-occurrence"])' +
         '        }' +
         '      }' +
         '    }' +
@@ -147,7 +147,7 @@ const doQuery = async () => {
     return ret;
 }
 
-const slimTokens = tokens => {
+const slimTokens = (tokens, sourceOrGl) => {
     const ret = [];
     const occurrences = {};
     if (!tokens) {
@@ -155,20 +155,18 @@ const slimTokens = tokens => {
     }
     for (const token of tokens) {
         const t2 = deepcopy(token);
-        const lemmaScopes = t2.scopes.filter(s => s.startsWith("attribute/spanWithAtts/w/lemma"));
+        const occurrenceScopes = t2.scopes.filter(s => s.startsWith("attribute/milestone/zaln/x-occurrence"));
         const xContentScopes = t2.scopes.filter(s => s.startsWith("attribute/milestone/zaln/x-content"));
         if (xContentScopes.length > 0) {
             t2.blContent = xContentScopes[0].split("/")[5];
         } else {
             t2.blContent = t2.chars;
         }
-        if (lemmaScopes.length > 0) {
-            t2.lemma = lemmaScopes[0].split("/")[5];
-        }
-        delete t2.scopes;
         t2.chars = t2.chars.replace(/[ \t\r\n]+/g, " ");
         const occurrenceField = "blContent";
-        if (occurrenceField in t2) {
+        if (sourceOrGl === "gl" && occurrenceScopes.length > 0) {
+            t2.occurrence = parseInt(occurrenceScopes[0].split("/")[5]);
+        } else if (sourceOrGl === "source" && occurrenceField in t2) {
             if (!(t2[occurrenceField] in occurrences)) {
                 occurrences[t2[occurrenceField]] = 1;
             } else {
@@ -176,6 +174,7 @@ const slimTokens = tokens => {
             }
             t2.occurrence = occurrences[t2[occurrenceField]];
         }
+        delete t2.scopes;
         ret.push(t2);
     }
     return ret;
@@ -237,7 +236,7 @@ getDocuments(pk)
                 console.log(`  ${tsvRecord.book} ${cv}`);
                 console.log(`    Search string: ${tsvRecord.origQuote}`);
                 const searchTuples = searchWordRecords(tsvRecord.origQuote);
-                const ugntTokens = slimTokens(tokenLookup.ugnt[book][cv].filter(t => t.subType === "wordLike"));
+                const ugntTokens = slimTokens(tokenLookup.ugnt[book][cv].filter(t => t.subType === "wordLike"), "source");
                 const content = contentForSearchWords(searchTuples, ugntTokens);
                 if (!content) {
                     console.log(`    NO MATCH IN SOURCE`);
@@ -248,7 +247,7 @@ getDocuments(pk)
                 }
                 console.log(`    Source content for match: ${content.map(c => `<${c[0]} ${c[1]}>`).join(" ")}`);
                 for (const gl of ["ult", "ust"]) {
-                    const glTokens = slimTokens(tokenLookup[gl][book][cv]);
+                    const glTokens = slimTokens(tokenLookup[gl][book][cv], "gl");
                     if (!glTokens) {
                         console.log(`    NO TOKENS for ${gl}`);
                         issues[gl]++;
