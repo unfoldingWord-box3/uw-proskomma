@@ -1,9 +1,11 @@
+const xre = require('xregexp');
+
 const {pruneTokens, slimTokens} = require('../utils/tokens');
 
 const searchWordRecords = origString => {
     const ret = [];
     for (let searchExpr of origString.split(" ")) {
-        searchExpr = searchExpr.replace(/[,’?;.!]/g, "");
+        searchExpr = xre.replace(searchExpr, `[,’?;.!\\p{Z}\\p{C}\\p{P}]`, "", "all");
         if (searchExpr.includes("…")) {
             const searchExprParts = searchExpr.split("…");
             ret.push([searchExprParts[0], false]);
