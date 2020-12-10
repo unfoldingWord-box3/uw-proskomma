@@ -1,6 +1,6 @@
 const xre = require('xregexp');
 
-const {pruneTokens, slimTokens} = require('../utils/tokens');
+const {pruneTokens, slimSourceTokens, slimGLTokens} = require('../utils/tokens');
 
 const searchWordRecords = origString => {
     const ret = [];
@@ -28,9 +28,9 @@ const contentForSearchWords = (searchTuples, tokens) => {
         } else if (tokens.length === 0) { // No more tokens - fail
             return null;
         } else if (tokens[0].chars === searchTuples[0][0]) { // First word matched, try next one
-            return lfsw1(searchTuples.slice(1), tokens.slice(1), content.concat([[tokens[0].blContent, tokens[0].occurrence]]));
+            return lfsw1(searchTuples.slice(1), tokens.slice(1), content.concat([[tokens[0].chars, tokens[0].occurrence]]));
         } else if (searchTuples[0][1]) { // non-greedy wildcard, try again on next token
-            return lfsw1(searchTuples, tokens.slice(1), content.concat([[tokens[0].blContent, tokens[0].occurrence]]));
+            return lfsw1(searchTuples, tokens.slice(1), content.concat([[tokens[0].chars, tokens[0].occurrence]]));
         } else { // No wildcard and no match - fail
             return null;
         }
@@ -44,7 +44,7 @@ const contentForSearchWords = (searchTuples, tokens) => {
 
 const highlightedAlignedGlText = (glTokens, content) => {
     return glTokens.map(token => {
-            const matchingContent = content.filter(c => token.occurrence && c[0] === token.blContent && c[1] === token.occurrence);
+            const matchingContent = content.filter(c => (token.occurrence.length > 0) && token.blContent.includes(c[0]) && token.occurrence.includes(c[1]));
             return [token.chars, (matchingContent.length > 0)];
         }
     )
@@ -52,7 +52,7 @@ const highlightedAlignedGlText = (glTokens, content) => {
 
 const gl4source = (book, cv, sourceTokens, glTokens, searchString, prune) => {
     const searchTuples = searchWordRecords(searchString);
-    const ugntTokens = slimTokens(sourceTokens.filter(t => t.subType === "wordLike"), "source");
+    const ugntTokens = slimSourceTokens(sourceTokens.filter(t => t.subType === "wordLike"));
     const content = contentForSearchWords(searchTuples, ugntTokens);
     if (!content) {
         return {
@@ -60,7 +60,7 @@ const gl4source = (book, cv, sourceTokens, glTokens, searchString, prune) => {
                 `NO MATCH IN SOURCE\nSearch Tuples: ${JSON.stringify(searchTuples)}`
         }
     }
-    const highlightedTokens = highlightedAlignedGlText(slimTokens(glTokens, "gl"), content);
+    const highlightedTokens = highlightedAlignedGlText(slimGLTokens(glTokens), content);
     if (prune) {
         return {"data": pruneTokens(highlightedTokens)};
     } else {
