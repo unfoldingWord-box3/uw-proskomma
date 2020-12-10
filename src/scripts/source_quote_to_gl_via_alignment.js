@@ -19,6 +19,7 @@ getDocuments(pk, book)
             const tokenLookup = await doQuery(pk);
             // Iterate over TSV records
             let nRecords = 0;
+            let counts = {pass:0, fail:0};
             for (const tsvRecord of readTsv(tsvPath)) {
                 nRecords++;
                 const cv = `${tsvRecord.chapter}:${tsvRecord.verse}`;
@@ -42,11 +43,16 @@ getDocuments(pk, book)
                     );
                     // Returned object has either "data" or "error"
                     if ("data" in highlighted) {
+                        counts.pass++;
                         console.log(`    ${gl}: "${highlightedAsString(highlighted.data)}"`);
                     } else {
-                        console.log(`    Error: ${highlighted.error}`)
+                        counts.fail++;
+                        console.log(`    Error: ${highlighted.error}`);
+                        console.log(`Verse tokens: ${JSON.stringify(sourceTokens.filter(t => t.subType === "wordLike").map(t => t.chars))}`);
+                        console.log(`Verse codepoints: ${sourceTokens.filter(t => t.subType === "wordLike").map(t => t.chars).map(s => "|" + Array.from(s).map(c => c.charCodeAt(0).toString(16)))}`);
                     }
                 }
             }
+            console.log(counts);
         }
     )

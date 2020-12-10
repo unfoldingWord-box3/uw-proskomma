@@ -4,8 +4,8 @@ const {pruneTokens, slimSourceTokens, slimGLTokens} = require('../utils/tokens')
 
 const searchWordRecords = origString => {
     const ret = [];
-    for (let searchExpr of origString.split(" ")) {
-        searchExpr = xre.replace(searchExpr, `[,’?;.!\\p{Z}\\p{C}\\p{P}]`, "", "all");
+    for (let searchExpr of xre.split(origString, /[\s־]/)) {
+        searchExpr = xre.replace(searchExpr,/[,’?;.!׃]/, "");
         if (searchExpr.includes("…")) {
             const searchExprParts = searchExpr.split("…");
             ret.push([searchExprParts[0], false]);
@@ -14,7 +14,7 @@ const searchWordRecords = origString => {
             ret.push([searchExpr, false]);
         }
     }
-    return ret;
+    return ret.filter(t => t[0] !== "׀");
 }
 
 const contentForSearchWords = (searchTuples, tokens) => {
@@ -57,7 +57,7 @@ const gl4source = (book, cv, sourceTokens, glTokens, searchString, prune) => {
     if (!content) {
         return {
             "error":
-                `NO MATCH IN SOURCE\nSearch Tuples: ${JSON.stringify(searchTuples)}`
+                `NO MATCH IN SOURCE\nSearch Tuples: ${JSON.stringify(searchTuples)}\nCodepoints: ${searchTuples.map(s => "|" + Array.from(s[0]).map(c => c.charCodeAt(0).toString(16)))}`
         }
     }
     const highlightedTokens = highlightedAlignedGlText(slimGLTokens(glTokens), content);
