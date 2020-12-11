@@ -1,7 +1,7 @@
-const { ProsKomma } = require('proskomma');
+const {ProsKomma} = require('proskomma');
 const packageJson = require('../package.json');
 
-class UWProsKomma extends ProsKomma {
+class UWProskomma extends ProsKomma {
 
     constructor() {
         super();
@@ -54,4 +54,4 @@ class UWProsKomma extends ProsKomma {
 
 }
 
-module.exports = {UWProsKomma}
+module.exports = {UWProskomma}

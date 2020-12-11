@@ -29,7 +29,7 @@ const slimGLTokens = (tokens) => {
     }
     for (const token of tokens) {
         const t2 = deepcopy(token);
-        const occurrenceScopes = t2.scopes.filter(s => s.startsWith("attribute/milestone/zaln/x-occurrence"));
+        const occurrenceScopes = t2.scopes.filter(s => s.startsWith("attribute/milestone/zaln/x-occurrence") && !s.endsWith("s"));
         const xContentScopes = t2.scopes.filter(s => s.startsWith("attribute/milestone/zaln/x-content"));
         t2.blContent = xContentScopes.map(s => s.split("/")[5]);
         t2.chars = t2.chars.replace(/[ \t\r\n]+/g, " ");

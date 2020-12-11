@@ -1,4 +1,4 @@
-const doQuery = async pk => {
+const doAlignmentQuery = async pk => {
     const query = ('{' +
         'docSets {' +
         '  abbr: selector(id:"abbr")' +
@@ -42,4 +42,4 @@ const doQuery = async pk => {
     return ret;
 }
 
-module.exports = {doQuery};
+module.exports = {doAlignmentQuery};

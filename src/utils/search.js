@@ -50,7 +50,7 @@ const highlightedAlignedGlText = (glTokens, content) => {
     )
 };
 
-const gl4source = (book, cv, sourceTokens, glTokens, searchString, prune) => {
+const gl4Source = (book, cv, sourceTokens, glTokens, searchString, prune) => {
     const searchTuples = searchWordRecords(searchString);
     const ugntTokens = slimSourceTokens(sourceTokens.filter(t => t.subType === "wordLike"));
     const content = contentForSearchWords(searchTuples, ugntTokens);
@@ -68,4 +68,4 @@ const gl4source = (book, cv, sourceTokens, glTokens, searchString, prune) => {
     }
 }
 
-module.exports = {gl4source};
+module.exports = {gl4Source};

@@ -1,22 +1,22 @@
 const {readTsv} = require('../utils/tsv');
 const {getDocuments} = require('../utils/download');
-const {doQuery} = require('../utils/query');
-const {gl4source} = require('../utils/search');
+const {doAlignmentQuery} = require('../utils/query');
+const {gl4Source} = require('../utils/search');
 const {highlightedAsString} = require('../utils/render');
-const {UWProsKomma} = require('../index');
+const {UWProskomma} = require('../index');
 
-const pk = new UWProsKomma();
+const pk = new UWProskomma();
 const args = process.argv.slice(2);
 const tsvPath = args[0];
 const prune = (args[1] === "prune") || false;
-const book = tsvPath.split(".")[0].split("-")[1];
+const book = tsvPath.split("/").reverse()[0].split(".")[0].split("-")[1];
 
-getDocuments(pk, book)
+getDocuments(pk, book, true)
     .then(async () => {
             // Query Proskomma which now contains the books
             // Returns the tokens for each verse, accessible by
             // [abbr][book][chapter:verse]
-            const tokenLookup = await doQuery(pk);
+            const tokenLookup = await doAlignmentQuery(pk);
             // Iterate over TSV records
             let nRecords = 0;
             let counts = {pass:0, fail:0};
@@ -33,7 +33,7 @@ getDocuments(pk, book)
                     const sourceTokens = source[book][cv];
                     const glTokens = tokenLookup[gl][book][cv];
                     // Do the alignment
-                    const highlighted = gl4source(
+                    const highlighted = gl4Source(
                         book,
                         cv,
                         sourceTokens,

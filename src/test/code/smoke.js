@@ -2,12 +2,18 @@ const test = require('tape');
 const fse = require('fs-extra');
 const path = require('path');
 
-const {UWProsKomma} = require('../../index')
+const {
+    UWProskomma,
+    getDocuments,
+} = require('../../../index')
+
+const {tsvAlignment} = require("../lib/alignment");
+const {getPkWithDownloads} = require("../lib/download");
 
 const testGroup = "Smoke";
 
 const pkWithDoc = () => {
-    const pk = new UWProsKomma();
+    const pk = new UWProskomma();
     const content = fse.readFileSync(path.resolve(__dirname, "../test_data/usfm/ust_psa_1.usfm")).toString();
     pk.importDocument(
         {"org": "unfoldingWord", "lang": "en", "abbr": "ust"},
@@ -17,6 +23,9 @@ const pkWithDoc = () => {
     return pk;
 }
 
+const pkWithEPHDownloads = getPkWithDownloads("EPH");
+const pkWith3JNDownloads = getPkWithDownloads("3JN");
+
 const itemFragment = '{ ... on Token { subType chars } ... on Scope { itemType label } ... on Graft { subType sequenceId } }';
 
 test(
@@ -24,7 +33,7 @@ test(
     async function (t) {
         try {
             t.plan(1);
-            t.doesNotThrow(() => new UWProsKomma());
+            t.doesNotThrow(() => new UWProskomma());
         } catch (err) {
             console.log(err)
         }
@@ -36,7 +45,7 @@ test(
     async function (t) {
         try {
             t.plan(1);
-            const pk = new UWProsKomma();
+            const pk = new UWProskomma();
             const query = '{selectors { name type regex } }';
             const result = await pk.gqlQuery(query);
             t.equal(result.errors, undefined);
@@ -51,7 +60,7 @@ test(
     async function (t) {
         try {
             t.plan(2);
-            const pk = new UWProsKomma();
+            const pk = new UWProskomma();
             const query = '{ processor packageVersion }';
             const result = await pk.gqlQuery(query);
             t.equal(result.errors, undefined);
@@ -93,6 +102,54 @@ test(
             t.equal(blocks.map(b => b.is).map(is => is.map(s => s.label)).filter(l => l.includes("milestone/ts")).length, 3);
             t.equal(blocks.map(b => b.bg).map(bg => bg.map(g => g.subType)).filter(s => s.includes("title")).length, 1);
             t.equal(blocks.map(b => b.bg).map(bg => bg.map(g => g.subType)).filter(s => s.includes("heading")).length, 0);
+        } catch (err) {
+            console.log(err)
+        }
+    }
+);
+
+test(
+    `Simple Greek alignment (${testGroup})`,
+    async function (t) {
+        try {
+            t.plan(2);
+            const highlighted = await tsvAlignment(await pkWithEPHDownloads, "grace_and_peace", "EPH", "ult");
+            t.ok(!highlighted.error);
+            t.equal(highlighted.data.map(h => h[0]).join(""), "Grace to you and peace");
+        } catch (err) {
+            console.log(err)
+        }
+    }
+);
+
+test(
+    `Greek alignment with ellipsis (${testGroup})`,
+    async function (t) {
+        try {
+            t.plan(2);
+            const highlighted = await tsvAlignment(await pkWithEPHDownloads,"paul_apostle", "EPH", "ult");
+            t.ok(!highlighted.error);
+            t.equal(
+                highlighted.data.filter(h => h[1] && h[0] !== " ").map(h => h[0]).join(" "),
+                "Paul an apostle of Christ Jesus through the will of God to the saints who are in Ephesus"
+            );
+        } catch (err) {
+            console.log(err)
+        }
+    }
+);
+
+test(
+    `Greek alignment with nested \\zaln (${testGroup})`,
+    async function (t) {
+        try {
+            t.plan(2);
+            const highlighted = await tsvAlignment(await pkWith3JNDownloads,"mouth_to_mouth", "3JN", "ust");
+            t.ok(!highlighted.error);
+            t.equal(
+                highlighted.data.filter(h => h[1] && h[0] !== " ").map(h => h[0]).join(" "),
+                "directly"
+            );
         } catch (err) {
             console.log(err)
         }
