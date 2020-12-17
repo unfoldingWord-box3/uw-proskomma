@@ -3,7 +3,7 @@ const {getDocuments} = require('../utils/download');
 const {doAlignmentQuery} = require('../utils/query');
 const {gl4Source} = require('../utils/search');
 const {highlightedAsString} = require('../utils/render');
-const {UWProskomma} = require('../index');
+const {UWProskomma} = require('../../index');
 
 const pk = new UWProskomma();
 const args = process.argv.slice(2);

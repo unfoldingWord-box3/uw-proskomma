@@ -3,7 +3,7 @@ const YAML = require('js-yaml-parser');
 const fse = require('fs-extra');
 const deepcopy = require('deepcopy');
 
-const {UWProsKomma} = require('../index');
+const {UWProskomma} = require('../../index');
 
 const getDocuments = async pk => {
     const baseURLs = [
@@ -254,7 +254,7 @@ const glTextForLemma = (tokens, lemma) => {
 }
 
 // MAIN
-const pk = new UWProsKomma();
+const pk = new UWProskomma();
 const args = process.argv.slice(2);
 const tsvPath = args[0];
 const book = tsvPath.split(".")[0].split("-")[1];
