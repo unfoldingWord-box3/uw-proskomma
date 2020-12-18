@@ -68,4 +68,4 @@ const gl4Source = (book, cv, sourceTokens, glTokens, searchString, prune) => {
     }
 }
 
-module.exports = {gl4Source};
+module.exports = {searchWordRecords, contentForSearchWords, gl4Source};
