@@ -113,7 +113,7 @@ const doQuery = async () => {
         '        scopeLabels' +
         '        tokens {' +
         '          subType' +
-        '          chars' +
+        '          payload' +
         '          position' +
         '          scopes(startsWith:["attribute/milestone/zaln/x-lemma", "attribute/spanWithAtts/w/lemma", ])' +
         '        }' +
@@ -156,7 +156,7 @@ const slimTokens = tokens => {
             const t2 = deepcopy(t);
             t2.lemma = t2.scopes.map(s => s.split("/")[5]);
             delete t2.scopes;
-            t2.chars = t2.chars.replace(/[ \t\r\n]+/g, " ");
+            t2.payload = t2.payload.replace(/[ \t\r\n]+/g, " ");
             return t2;
         })
 }
@@ -171,7 +171,7 @@ const lemmaForSearchWords = (searchTuples, tokens) => {
             return lemma;
         } else if (tokens.length === 0) { // No more tokens - fail
             return null;
-        } else if (tokens[0].chars === searchTuples[0][0]) { // First word matched, try next one
+        } else if (tokens[0].payload === searchTuples[0][0]) { // First word matched, try next one
             return lfsw1(searchTuples.slice(1), tokens.slice(1), lemma.concat(tokens[0].lemma));
         } else if (searchTuples[0][1]) { // non-greedy wildcard, try again on next token
             return lfsw1(searchTuples, tokens.slice(1), lemma.concat(tokens[0].lemma));
@@ -200,7 +200,7 @@ const glTextForLemma = (tokens, lemma) => {
         if (tokens.length === 0) { // End of tokens
             return [glWords, lemmaTuples.filter(l => !l[1]).length];
         } else if (!tokens[0].lemma) { // No lemmas for first token - try next token
-            return gltfl1(tokens.slice(1), lemmaTuples, glWords.concat([[tokens[0].chars, false]]));
+            return gltfl1(tokens.slice(1), lemmaTuples, glWords.concat([[tokens[0].payload, false]]));
         } else { // Try to match lemmaTuples to lemma for first Token
             let matched = false;
             for (const tokenLemma of tokens[0].lemma) {
@@ -212,19 +212,19 @@ const glTextForLemma = (tokens, lemma) => {
                 }
             }
             if (matched) { // Matched token and updated at least one lemma flag - next token please!
-                return gltfl1(tokens.slice(1), lemmaTuples, glWords.concat([[tokens[0].chars, true]]));
+                return gltfl1(tokens.slice(1), lemmaTuples, glWords.concat([[tokens[0].payload, true]]));
             } else { // No match - continue if unmatched lemma
                 if (lemmaTuples.filter(l => !l[1]).length === 0) {
-                    return [glWords.concat(tokens.map(t => [t.chars, false])), lemmaTuples.filter(l => !l[1]).length];
+                    return [glWords.concat(tokens.map(t => [t.payload, false])), lemmaTuples.filter(l => !l[1]).length];
                 } else {
-                    return gltfl1(tokens.slice(1), lemmaTuples, glWords.concat([[tokens[0].chars, false]]));
+                    return gltfl1(tokens.slice(1), lemmaTuples, glWords.concat([[tokens[0].payload, false]]));
                 }
             }
         }
     }
     for (let n = 0; n < tokens.length; n++) {
         const result = gltfl1(tokens.slice(n), deepcopy(initialLemmaTuples));
-        const fullResult = [tokens.slice(0, n).map(t => [t.chars, false]).concat(result[0]), result[1]];
+        const fullResult = [tokens.slice(0, n).map(t => [t.payload, false]).concat(result[0]), result[1]];
         results.push(fullResult);
     }
     const matchScore = r => {
@@ -281,7 +281,7 @@ getDocuments(pk)
                 if (!lemma) {
                     console.log(`    NO LEMMA MATCHED`);
                     console.log(`      Search Tuples: ${JSON.stringify(searchTuples)}`)
-                    console.log(`      Verse content: ${ugntTokens.map(t => `<${t.chars} ${t.lemma.join("|")}>`).join(", ")}`)
+                    console.log(`      Verse content: ${ugntTokens.map(t => `<${t.payload} ${t.lemma.join("|")}>`).join(", ")}`)
                     issues.ugnt++;
                     continue;
                 }
@@ -296,7 +296,7 @@ getDocuments(pk)
                     const glText = glTextForLemma(glTokens, lemma);
                     if (!glText) {
                         console.log(`    ${gl}: NO GL TEXT MATCHED`);
-                        console.log(`      Verse content: ${glTokens.map(t => `<${t.chars} ${t.lemma.join("|")}>`).join(", ")}`)
+                        console.log(`      Verse content: ${glTokens.map(t => `<${t.payload} ${t.lemma.join("|")}>`).join(", ")}`)
                         issues[gl]++;
                         continue;
                     }

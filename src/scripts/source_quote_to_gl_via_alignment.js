@@ -48,8 +48,8 @@ getDocuments(pk, book, true)
                     } else {
                         counts.fail++;
                         console.log(`    Error: ${highlighted.error}`);
-                        console.log(`Verse tokens: ${JSON.stringify(sourceTokens.filter(t => t.subType === "wordLike").map(t => t.chars))}`);
-                        console.log(`Verse codepoints: ${sourceTokens.filter(t => t.subType === "wordLike").map(t => t.chars).map(s => "|" + Array.from(s).map(c => c.charCodeAt(0).toString(16)))}`);
+                        console.log(`Verse tokens: ${JSON.stringify(sourceTokens.filter(t => t.subType === "wordLike").map(t => t.payload))}`);
+                        console.log(`Verse codepoints: ${sourceTokens.filter(t => t.subType === "wordLike").map(t => t.payload).map(s => "|" + Array.from(s).map(c => c.charCodeAt(0).toString(16)))}`);
                     }
                 }
             }
