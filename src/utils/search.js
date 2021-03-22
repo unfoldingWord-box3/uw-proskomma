@@ -27,10 +27,10 @@ const contentForSearchWords = (searchTuples, tokens) => {
             return content;
         } else if (tokens.length === 0) { // No more tokens - fail
             return null;
-        } else if (tokens[0].chars === searchTuples[0][0]) { // First word matched, try next one
-            return lfsw1(searchTuples.slice(1), tokens.slice(1), content.concat([[tokens[0].chars, tokens[0].occurrence]]));
+        } else if (tokens[0].payload === searchTuples[0][0]) { // First word matched, try next one
+            return lfsw1(searchTuples.slice(1), tokens.slice(1), content.concat([[tokens[0].payload, tokens[0].occurrence]]));
         } else if (searchTuples[0][1]) { // non-greedy wildcard, try again on next token
-            return lfsw1(searchTuples, tokens.slice(1), content.concat([[tokens[0].chars, tokens[0].occurrence]]));
+            return lfsw1(searchTuples, tokens.slice(1), content.concat([[tokens[0].payload, tokens[0].occurrence]]));
         } else { // No wildcard and no match - fail
             return null;
         }
@@ -45,7 +45,7 @@ const contentForSearchWords = (searchTuples, tokens) => {
 const highlightedAlignedGlText = (glTokens, content) => {
     return glTokens.map(token => {
             const matchingContent = content.filter(c => (token.occurrence.length > 0) && token.blContent.includes(c[0]) && token.occurrence.includes(c[1]));
-            return [token.chars, (matchingContent.length > 0)];
+            return [token.payload, (matchingContent.length > 0)];
         }
     )
 };

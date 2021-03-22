@@ -26,8 +26,6 @@ const pkWithDoc = () => {
 const pkWithEPHDownloads = getPkWithDownloads("EPH");
 const pkWith3JNDownloads = getPkWithDownloads("3JN");
 
-const itemFragment = '{ ... on Token { subType chars } ... on Scope { itemType label } ... on Graft { subType sequenceId } }';
-
 test(
     `Instantiate (${testGroup})`,
     async function (t) {
@@ -95,11 +93,11 @@ test(
         try {
             t.plan(4);
             const pk = pkWithDoc();
-            const query = `{documents { mainSequence { blocks { is { label } bg { subType } } } } }`;
+            const query = `{documents { mainSequence { blocks { is { payload } bg { subType } } } } }`;
             const result = await pk.gqlQuery(query);
             t.equal(result.errors, undefined);
             const blocks = result.data.documents[0].mainSequence.blocks;
-            t.equal(blocks.map(b => b.is).map(is => is.map(s => s.label)).filter(l => l.includes("milestone/ts")).length, 3);
+            t.equal(blocks.map(b => b.is).map(is => is.map(s => s.payload)).filter(l => l.includes("milestone/ts")).length, 3);
             t.equal(blocks.map(b => b.bg).map(bg => bg.map(g => g.subType)).filter(s => s.includes("title")).length, 1);
             t.equal(blocks.map(b => b.bg).map(bg => bg.map(g => g.subType)).filter(s => s.includes("heading")).length, 0);
         } catch (err) {

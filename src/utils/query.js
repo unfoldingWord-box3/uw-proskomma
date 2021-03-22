@@ -12,7 +12,7 @@ const doAlignmentQuery = async pk => {
         '        scopeLabels' +
         '        tokens {' +
         '          subType' +
-        '          chars' +
+        '          payload' +
         '          position' +
         '          scopes(startsWith:["attribute/milestone/zaln/x-content", "attribute/milestone/zaln/x-occurrence"])' +
         '        }' +
