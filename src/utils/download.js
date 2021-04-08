@@ -1,7 +1,7 @@
 const Axios = require("axios");
 const YAML = require('js-yaml-parser');
 
-const getDocuments = async (pk, book, verbose) => {
+const getDocuments = async (pk, book, verbose, serialize) => {
     const baseURLs = [
         ["unfoldingWord", "hbo", "uhb", "https://git.door43.org/unfoldingWord/hbo_uhb/raw/branch/master"],
         ["unfoldingWord", "grc", "ugnt", "https://git.door43.org/unfoldingWord/el-x-koine_ugnt/raw/branch/master"],
@@ -9,6 +9,7 @@ const getDocuments = async (pk, book, verbose) => {
         ["unfoldingWord", "en", "ult", "https://git.door43.org/unfoldingWord/en_ult/raw/branch/master"]
     ];
     verbose = verbose || false;
+    serialize = serialize || false;
     if (verbose) console.log("Download USFM");
     for (const [org, lang, abbr, baseURL] of baseURLs) {
         const selectors = {
@@ -27,7 +28,7 @@ const getDocuments = async (pk, book, verbose) => {
                     const bookPaths = manifest.projects.map(e => e.path.split("/")[1]);
                     for (const bookPath of bookPaths) {
                         const pathBook = bookPath.split(".")[0].split('-')[1];
-                        if (pathBook !== book) {
+                        if (book && (pathBook !== book)) {
                             continue;
                         }
                         if (verbose) console.log(`    ${pathBook}`)
@@ -55,6 +56,19 @@ const getDocuments = async (pk, book, verbose) => {
         const startTime = Date.now();
         pk.importDocuments(selectors, "usfm", content, {});
         if (verbose) console.log(`      Imported in ${Date.now() - startTime} msec`);
+        if (serialize) {
+            const path = require("path");
+            const fse = require('fs-extra');
+            const outDir = path.resolve(__dirname, '..', '..', 'serialized');
+            fse.mkdirs(outDir);
+            fse.writeFileSync(
+                path.join(
+                    outDir,
+                    Object.values(selectors).join('_') + "_pkserialized.json",
+                ),
+                JSON.stringify(pk.serializeSuccinct(`${org}/${lang}_${abbr}`))
+            );
+        }
     }
     return pk;
 }
