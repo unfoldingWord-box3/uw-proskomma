@@ -75,12 +75,12 @@ test(
         try {
             t.plan(3);
             const pk = pkWithDoc();
-            const query = '{docSets { selectors { key value } selectorString } }';
+            const query = '{docSets { selectors { key value } id } }';
             const result = await pk.gqlQuery(query);
             t.equal(result.errors, undefined);
             const docSet = result.data.docSets[0];
             t.equal(docSet.selectors.length, 3);
-            t.equal(docSet.selectorString, "unfoldingWord/en_ust");
+            t.equal(docSet.id, "unfoldingWord/en_ust");
         } catch (err) {
             console.log(err)
         }
