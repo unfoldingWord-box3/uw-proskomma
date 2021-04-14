@@ -2,6 +2,12 @@ const path = require('path');
 const fse = require('fs-extra');
 const {UWProskomma} = require('../../index');
 
+if (process.argv.length !== 6) {
+    console.log(`ERROR: Expected 4 arguments, found ${process.argv.length - 2}`);
+    console.log(`USAGE: node serialize_dirs.js <inputDir> <org> <lang> <abbr>`);
+    process.exit(1);
+}
+
 const pk = new UWProskomma();
 const inputDir = process.argv[2];
 const org = process.argv[3];
