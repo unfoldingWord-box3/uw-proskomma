@@ -2,6 +2,8 @@ const test = require('tape');
 const fse = require('fs-extra');
 const path = require('path');
 
+const { rejigAlignment } = require('../../utils/rejig_alignment');
+
 const {
     UWProskomma,
     getDocuments,
@@ -148,6 +150,21 @@ test(
                 highlighted.data.filter(h => h[1] && h[0] !== " ").map(h => h[0]).join(" "),
                 "directly"
             );
+        } catch (err) {
+            console.log(err)
+        }
+    }
+);
+
+test(
+    `Rejig alignment markup (${testGroup})`,
+    async function (t) {
+        try {
+            t.plan(1);
+            const before = `\\zaln-s | x-strong="G39720" x-lemma="Παῦλος" x-morph="Gr,N,,,,,NMS," x-occurrence="1" x-occurrences="1" x-content="Παῦλος"\\*\\w Paul|x-occurrence="1" x-occurrences="1"\\w*\\zaln-e\\*`;
+            const after = rejigAlignment(before);
+            t.ok(true);
+            console.log(after);
         } catch (err) {
             console.log(err)
         }
