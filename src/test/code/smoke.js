@@ -164,7 +164,6 @@ test(
             const before = `\\zaln-s | x-strong="G39720" x-lemma="Παῦλος" x-morph="Gr,N,,,,,NMS," x-occurrence="1" x-occurrences="1" x-content="Παῦλος"\\*\\w Paul|x-occurrence="1" x-occurrences="1"\\w*\\zaln-e\\*`;
             const after = rejigAlignment(before);
             t.ok(true);
-            console.log(after);
         } catch (err) {
             console.log(err)
         }
