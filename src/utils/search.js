@@ -17,7 +17,7 @@ const searchWordRecords = origString => {
     return ret.filter(t => t[0] !== "׀");
 }
 
-const contentForSearchWords = (searchTuples, tokens) => {
+const contentForSearchWords = (searchTuples, searchOccurrence, tokens) => {
 
     const lfsw1 = (searchTuples, tokens, content) => {
         if (!content) {
@@ -50,14 +50,14 @@ const highlightedAlignedGlText = (glTokens, content) => {
     )
 };
 
-const gl4Source = (book, cv, sourceTokens, glTokens, searchString, prune) => {
+const gl4Source = (book, cv, sourceTokens, glTokens, searchString, searchOccurrence, prune) => {
     const searchTuples = searchWordRecords(searchString);
-    const ugntTokens = slimSourceTokens(sourceTokens.filter(t => t.subType === "wordLike"));
-    const content = contentForSearchWords(searchTuples, ugntTokens);
+    const originalLanguageTokens = slimSourceTokens(sourceTokens.filter(t => t.subType === "wordLike"));
+    const content = contentForSearchWords(searchTuples, searchOccurrence, originalLanguageTokens);
     if (!content) {
         return {
             "error":
-                `NO MATCH IN SOURCE\nSearch Tuples: ${JSON.stringify(searchTuples)}\nCodepoints: ${searchTuples.map(s => "|" + Array.from(s[0]).map(c => c.charCodeAt(0).toString(16)))}`
+                `NO MATCH IN BIBLICAL LANGUAGE SOURCE\nSearch Tuples: ${JSON.stringify(searchTuples)}\nCodepoints: ${searchTuples.map(s => "|" + Array.from(s[0]).map(c => c.charCodeAt(0).toString(16)))}`
         }
     }
     const highlightedTokens = highlightedAlignedGlText(slimGLTokens(glTokens), content);

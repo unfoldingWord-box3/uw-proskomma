@@ -8,10 +8,11 @@ const {UWProskomma} = require('../../index');
 const pk = new UWProskomma();
 const args = process.argv.slice(2);
 const tsvPath = args[0];
-const prune = (args[1] === "prune") || false;
+const testament = args[1] // 'OT' or 'NT'
+const prune = (args[2] === "prune") || false;
 const book = tsvPath.split("/").reverse()[0].split(".")[0].split("-")[1];
 
-getDocuments(pk, book, true)
+getDocuments(pk, testament, book, true, false) //last parameters are "verbose" and "serialize"
     .then(async () => {
             // Query Proskomma which now contains the books
             // Returns the tokens for each verse, accessible by
@@ -27,8 +28,8 @@ getDocuments(pk, book, true)
                 console.log(`    Search string: ${tsvRecord.origQuote}`);
                 // Iterate over GLs
                 for (const gl of ["ult", "ust"]) {
-                    // Pick the right source for the book (inelegant but works)
-                    const source = tokenLookup.uhb || tokenLookup.ugnt;
+                    // Pick the right source for the book
+                    const source = testament === 'OT' ? tokenLookup.uhb : tokenLookup.ugnt;
                     // Get the tokens for BCV
                     const sourceTokens = source[book][cv];
                     const glTokens = tokenLookup[gl][book][cv];
@@ -39,6 +40,7 @@ getDocuments(pk, book, true)
                         sourceTokens,
                         glTokens,
                         tsvRecord.origQuote,
+                        tsvRecord.occurrence,
                         prune
                     );
                     // Returned object has either "data" or "error"
