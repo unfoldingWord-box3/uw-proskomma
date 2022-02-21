@@ -28,6 +28,9 @@ const getDocuments = async (pk, book, verbose, serialize) => {
                     const bookPaths = manifest.projects.map(e => e.path.split("/")[1]);
                     for (const bookPath of bookPaths) {
                         const pathBook = bookPath.split(".")[0].split('-')[1];
+                        if (pathBook === 'FRT') {
+                            continue;
+                        }
                         if (book && (pathBook !== book)) {
                             continue;
                         }
