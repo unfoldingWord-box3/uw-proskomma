@@ -20,7 +20,7 @@ class UWProskomma extends Proskomma {
             {
                 name: "abbr",
                 type: "string",
-                regex: "^[a-z0-9]+$"
+                regex: "^[A-za-z0-9_-]+$"
             }
         ];
         this.validateSelectors();
