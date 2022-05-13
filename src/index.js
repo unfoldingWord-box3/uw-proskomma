@@ -1,6 +1,6 @@
 const packageJson = require('../package.json');
 
-const {Proskomma} = require('proskomma');
+const {Proskomma, typeDefs, resolvers} = require('proskomma');
 
 class UWProskomma extends Proskomma {
 
@@ -55,4 +55,4 @@ class UWProskomma extends Proskomma {
 
 }
 
-module.exports = {UWProskomma}
+module.exports = {UWProskomma, typeDefs, resolvers}

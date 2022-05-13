@@ -7,7 +7,6 @@ const doAlignmentQuery = async pk => {
         '    mainSequence {' +
         '      itemGroups (' +
         '        byScopes:["chapter/", "verses/"]' +
-        '        includeContext:true' +
         '      ) {' +
         '        scopeLabels' +
         '        tokens {' +
