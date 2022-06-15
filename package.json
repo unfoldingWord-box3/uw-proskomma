@@ -1,13 +1,15 @@
 {
   "name": "uw-proskomma",
-  "version": "0.7.0",
+  "version": "0.8.0",
   "description": "A Subclass of Proskomma for Unfolding Word",
-  "main": "src/index.js",
+  "main": "dist/index.js",
   "scripts": {
     "test": "node_modules/tape/bin/tape src/test/code/*.js | node_modules/tap-summary/bin/cmd.js",
     "rawTest": "node_modules/tape/bin/tape src/test/code/*.js",
     "oneTest": "node_modules/tape/bin/tape src/test/code/$TESTSCRIPT.js",
-    "coverage": "node_modules/nyc/bin/nyc.js node_modules/tape/bin/tape src/test/code/*.js | node_modules/tap-nyc/bin/cmd.js"
+    "coverage": "node_modules/nyc/bin/nyc.js node_modules/tape/bin/tape src/test/code/*.js | node_modules/tap-nyc/bin/cmd.js",
+    "build": "babel src -d dist",
+    "prepublishOnly": "rm -fr dist && npm run build"
   },
   "repository": {
     "type": "git",
@@ -23,6 +25,7 @@
   },
   "homepage": "https://github.com/unfoldingWord-box3/uw-proskomma-rcl#readme",
   "dependencies": {
+    "@babel/core": "^7.17.10",
     "d3-dsv": "^2.0.0",
     "deepcopy": "^2.1.0",
     "path": "^0.12.7",
@@ -31,6 +34,10 @@
   },
   "devDependencies": {
     "axios": "^0.21.4",
+    "@babel/cli": "^7.17.10",
+    "@babel/preset-env": "^7.17.10",
+    "babel-eslint": "^10.1.0",
+    "babel-tape-runner": "^3.0.0",
     "fs-extra": "^9.0.1",
     "js-yaml-parser": "^1.0.0",
     "nyc": "^15.1.0",
