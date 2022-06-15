@@ -64,7 +64,7 @@ test(
             const query = '{ processor packageVersion }';
             const result = await pk.gqlQuery(query);
             t.equal(result.errors, undefined);
-            t.equal(result.data.processor, "ProsKomma JS for Unfolding Word");
+            t.equal(result.data.processor, "Proskomma JS for Unfolding Word");
         } catch (err) {
             console.log(err)
         }
