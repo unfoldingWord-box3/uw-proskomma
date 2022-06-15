@@ -1,6 +1,6 @@
 {
   "name": "uw-proskomma",
-  "version": "0.8.0",
+  "version": "0.8.1",
   "description": "A Subclass of Proskomma for Unfolding Word",
   "main": "dist/index.js",
   "scripts": {
