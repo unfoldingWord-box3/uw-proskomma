@@ -29,7 +29,7 @@
     "d3-dsv": "^2.0.0",
     "deepcopy": "^2.1.0",
     "path": "^0.12.7",
-    "proskomma": "^0.7.3",
+    "proskomma": "^0.7.5",
     "xregexp": "^4.3.0"
   },
   "devDependencies": {
