@@ -169,3 +169,22 @@ test(
         }
     }
 );
+
+test(
+    `Add tags (${testGroup})`,
+    async function (t) {
+        try {
+            t.plan(3);
+            const pk = pkWithDoc();
+            const query = '{docSets { id documents {id bookCode: header(id:"bookCode")} } }';
+            const gqlResult = pk.gqlQuerySync(query);
+            const docSetId = gqlResult.data.docSets[0].id;
+            const documentId = gqlResult.data.docSets[0].documents.filter(d => d.bookCode === 'PSA')[0].id;
+            t.ok(pk.gqlQuerySync(`mutation { addDocSetTags(docSetId: "${docSetId}", tags: ["production"]) }`).data.addDocSetTags.includes('production'));
+            t.ok(pk.gqlQuerySync(`mutation { addDocumentTags(docSetId: "${docSetId}", documentId: "${documentId}" tags: ["checked"]) }`).data.addDocumentTags.includes('checked'));
+             t.ok(true);
+        } catch (err) {
+            console.log(err)
+        }
+    }
+);
