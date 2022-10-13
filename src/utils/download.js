@@ -1,12 +1,12 @@
 const Axios = require("axios");
 const YAML = require('js-yaml-parser');
 
-const getDocuments = async (pk, book, verbose, serialize) => {
-    const baseURLs = [
-        ["unfoldingWord", "hbo", "uhb", "https://git.door43.org/unfoldingWord/hbo_uhb/raw/branch/master"],
+const getDocuments = async (pk, testament, book, verbose, serialize) => {
+    const baseURLs = [testament === 'OT' ?
+        ["unfoldingWord", "hbo", "uhb", "https://git.door43.org/unfoldingWord/hbo_uhb/raw/branch/master"] :
         ["unfoldingWord", "grc", "ugnt", "https://git.door43.org/unfoldingWord/el-x-koine_ugnt/raw/branch/master"],
-        ["unfoldingWord", "en", "ust", "https://git.door43.org/unfoldingWord/en_ust/raw/branch/master"],
-        ["unfoldingWord", "en", "ult", "https://git.door43.org/unfoldingWord/en_ult/raw/branch/master"]
+    ["unfoldingWord", "en", "ust", "https://git.door43.org/unfoldingWord/en_ust/raw/branch/master"],
+    ["unfoldingWord", "en", "ult", "https://git.door43.org/unfoldingWord/en_ult/raw/branch/master"]
     ];
     verbose = verbose || false;
     serialize = serialize || false;
@@ -20,7 +20,7 @@ const getDocuments = async (pk, book, verbose, serialize) => {
         if (verbose) console.log(`  ${org}/${lang}/${abbr}`)
         const content = [];
         await Axios.request(
-            {method: "get", "url": `${baseURL}/manifest.yaml`}
+            { method: "get", "url": `${baseURL}/manifest.yaml` }
         )
             .then(
                 async response => {
@@ -37,7 +37,7 @@ const getDocuments = async (pk, book, verbose, serialize) => {
                         if (verbose) console.log(`    ${pathBook}`)
                         try {
                             await Axios.request(
-                                {method: "get", "url": `${baseURL}/${bookPath}`}
+                                { method: "get", "url": `${baseURL}/${bookPath}` }
                             )
                                 .then(response => {
                                     if (response.status !== 200) {
@@ -76,4 +76,4 @@ const getDocuments = async (pk, book, verbose, serialize) => {
     return pk;
 }
 
-module.exports = {getDocuments};
+module.exports = { getDocuments };
