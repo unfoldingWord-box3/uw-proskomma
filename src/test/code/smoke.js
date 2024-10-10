@@ -131,7 +131,7 @@ test(
             t.ok(!highlighted.error);
             t.equal(
                 highlighted.data.filter(h => h[1] && h[0] !== " ").map(h => h[0]).join(" "),
-                "Paul an apostle of Christ Jesus through the will of God to the saints who are in Ephesus"
+                "Paul an apostle of Christ Jesus through the will of God to the saints the ones being in Ephesus"
             );
         } catch (err) {
             console.log(err)
